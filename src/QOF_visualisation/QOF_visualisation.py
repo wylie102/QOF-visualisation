@@ -1,4 +1,6 @@
-# TODO: Add code!
+import duckdb
+
+
 def main():
     pass
 
