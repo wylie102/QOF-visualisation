@@ -15,10 +15,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
-TARGET_DIR = Path(os.getenv("TARGET_DIRECTORY", ""))
-MAX_CONCURRENT = 10  # tune to your quota
-RETRIES = 3
+API_KEY: str | None = os.getenv("GOOGLE_MAPS_API_KEY")
+TARGET_DIR: Path = Path(os.getenv("TARGET_DIRECTORY", ""))
+MAX_CONCURRENT: int = 10  # tune to your quota
+RETRIES: int = 3
 
 
 class Coordinates(NamedTuple):
@@ -85,7 +85,7 @@ def get_coordinates_sync(
             result = gmaps.geocode(address)  # pyright: ignore[]
             if not result:
                 return Coordinates(lat=None, lng=None)
-            loc = cast(dict[str, float], result[0]["geometry"]["location"])
+            loc: dict[str, float] = cast(dict[str, float], result[0]["geometry"]["location"])
             return Coordinates(lat=loc["lat"], lng=loc["lng"])
         except Exception:
             delay = 2**attempt * 0.1
@@ -125,10 +125,7 @@ async def batch_geocode(
 ) -> list[tuple[str, float | None, float | None]]:
     sem = asyncio.Semaphore(MAX_CONCURRENT)
     async with httpx.AsyncClient(timeout=10.0) as session:
-        tasks = [
-            geocode_one(session, sem, code, short, long)
-            for code, short, long in addresses
-        ]
+        tasks = [geocode_one(session, sem, code, short, long) for code, short, long in addresses]
         return await asyncio.gather(*tasks)
 
 
@@ -145,19 +142,24 @@ async def main():
     )
 
     # create contact list parquet
-    addr_csv = find_target_files(gp_files, ["epraccur"])[0]
-    gp_csv = find_target_files(qof_files, ["mapping_nhs_geographies_2324"])[0]
-    gp_parquet = create_address_list(addr_csv, gp_csv)
+    addr_csv: Path = find_target_files(gp_files, ["epraccur"])[0]
+    gp_csv: Path = find_target_files(qof_files, ["mapping_nhs_geographies_2324"])[0]
+    gp_parquet: Path = create_address_list(addr_csv, gp_csv)
 
     # load practice_code + both addresses
     with duckdb.connect() as con:
-        addresses = con.sql(f"""
-            SELECT practice_code, short_address, long_address
+        addresses = con.sql(
+            f"""
+            SELECT
+                practice_code,
+                short_address,
+                long_address
             FROM '{gp_parquet}'
-        """).fetchall()
+            """
+        ).fetchall()
 
     # async geocode
-    coords = await batch_geocode(addresses)
+    coords: list[tuple[str, float | None, float | None]] = await batch_geocode(addresses)
 
     # sync fallback for any NULLs
     gmaps_sync = googlemaps.Client(key=API_KEY)

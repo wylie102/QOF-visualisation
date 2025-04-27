@@ -94,7 +94,7 @@ packages = ["src/QOF_visualisation"]
 
 [tool.ruff]
 # Set as desired, typically 88 (black standard) or 100 (wide).
-line-length = 88
+line-length = 100
 
 [tool.ruff.lint]
 # See: https://docs.astral.sh/ruff/rules/
