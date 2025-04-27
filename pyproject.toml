@@ -35,7 +35,15 @@ classifiers = [
 
 # ---- Main dependencies ----
 
-dependencies = ["duckdb>=1.2.2", "googlemaps>=4.10.0", "python-dotenv>=1.1.0"]
+dependencies = [
+  "duckdb>=1.2.2",
+  "googlemaps>=4.10.0",
+  "httpx>=0.28.1",
+  "pandas>=2.2.3",
+  "plotly>=6.0.1",
+  "python-dotenv>=1.1.0",
+  "sqlmesh>=0.177.0",
+]
 
 
 # ---- Dev dependencies ----
@@ -84,7 +92,7 @@ packages = ["src/QOF_visualisation"]
 
 [tool.ruff]
 # Set as desired, typically 88 (black standard) or 100 (wide).
-line-length = 100
+line-length = 88
 
 [tool.ruff.lint]
 # See: https://docs.astral.sh/ruff/rules/
