@@ -58,7 +58,7 @@ def main():
             Percentage_patients_achieved 
         where
             INDICATOR_CODE = 'COPD014' and
-            Percentage_patients_achieved >= 20;
+            Percentage_patients_achieved < 20;
         """
     )
     df: DataFrame = con.sql(
