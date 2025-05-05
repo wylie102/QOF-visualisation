@@ -1,8 +1,9 @@
+import textwrap
+
 import dash
-from dash import dcc, html, Input, Output
 import duckdb
 import plotly.express as px
-import textwrap
+from dash import Input, Output, dcc, html
 
 conn = duckdb.connect()
 
@@ -40,17 +41,20 @@ app.layout = html.Div(
             inline=True,
             style={"paddingTop": "10px"},
         ),
+        html.Div(id="indicator-description", style={"fontSize": "16px", "marginTop": "8px"}),
         dcc.Graph(id="map-graph", style={"height": "80vh"}),
-    ]
+    ],
+    style={"padding": "12px"},
 )
 
 
 @app.callback(
     Output("map-graph", "figure"),
+    Output("indicator-description", "children"),  # second output
     Input("indicator-dropdown", "value"),
     Input("bucket-radio", "value"),
 )
-def update_map(indicator, bucket):
+def update_map(indicator: str, bucket: str):
     sql = f"""
         WITH indicator_results AS (
             SELECT
@@ -58,7 +62,7 @@ def update_map(indicator, bucket):
                 percentage_patients_achieved AS pct,
                 GROUP_CODE,
                 GROUP_DESCRIPTION,
-                Output_description
+                Output_description as description
             FROM percent_achieved
             WHERE INDICATOR_CODE = '{indicator}'
               AND percentage_patients_achieved {bucket_sql[bucket]}
@@ -71,20 +75,19 @@ def update_map(indicator, bucket):
             g.lon,
             p.GROUP_CODE,
             p.GROUP_DESCRIPTION,
-            p.Output_description
+            p.description
         FROM indicator_results p
         LEFT JOIN gp_location_info g
           ON p.PRACTICE_CODE = g.PRACTICE_CODE
     """
-    df = conn.sql(sql).df()  # pandas DataFrame
-    print(df.columns)
+    df = conn.sql(sql).df()
 
-    if "Output_Description" in df.columns and not df.empty:
-        description = df["Output_Description"].iloc[0]
-    else:
-        description = indicator  # fallback
-
-    wrapped = "<br>".join(textwrap.wrap(description, width=60))
+    # description text (wrap if present, otherwise empty)
+    description_text = (
+        "<br>".join(textwrap.wrap(df["description"].iloc[0], 80))
+        if not df.empty
+        else "No description provided."
+    )
 
     fig = px.scatter_map(
         df,
@@ -97,14 +100,12 @@ def update_map(indicator, bucket):
         map_style="carto-positron",
     )
     fig.update_traces(
-        marker={"size": 6, "color": "blue"},
+        marker=dict(size=6, color="blue"),
         hovertemplate="<b>%{hovertext}</b><br>%{customdata[0]}%<extra></extra>",
     )
-    fig.update_layout(
-        title=f"{wrapped}<br><span style='font-size:0.9em'>{bucket}</span>",
-        margin={"r": 0, "t": 70, "l": 0, "b": 0},
-    )
-    return fig
+    fig.update_layout(margin=dict(r=0, t=0, l=0, b=0))
+
+    return fig, description_text
 
 
 if __name__ == "__main__":
