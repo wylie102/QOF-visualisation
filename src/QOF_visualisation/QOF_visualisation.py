@@ -49,16 +49,15 @@ percent_achieved = con.sql(percent_achieved_query)
 
 
 def main():
+    # Write percent achieved data to parquet.
     percent_achieved.to_parquet("Percent_achieved.parquet")
+
     selected_practices = con.sql(
         """
         from percent_achieved 
         select
             practice_code,
             Percentage_patients_achieved 
-        where
-            INDICATOR_CODE = 'COPD014' and
-            Percentage_patients_achieved < 20;
         """
     )
     df: DataFrame = con.sql(
@@ -83,7 +82,7 @@ def main():
         zoom=6,
         center=dict(lat=53, lon=-1.5),
         map_style="carto-positron",
-        title="Practices achieving <20% in COPD014 in 2023/2024",
+        title="Practices",
     )
 
     fig.update_traces(

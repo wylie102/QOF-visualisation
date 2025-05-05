@@ -36,6 +36,7 @@ classifiers = [
 # ---- Main dependencies ----
 
 dependencies = [
+  "dash>=3.0.4",
   "duckdb>=1.2.2",
   "googlemaps>=4.10.0",
   "httpx>=0.28.1",
@@ -44,6 +45,7 @@ dependencies = [
   "polars>=1.28.1",
   "pyarrow>=20.0.0",
   "python-dotenv>=1.1.0",
+  "sqlglot>=26.16.2",
   "sqlmesh>=0.177.0",
 ]
 
