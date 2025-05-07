@@ -1,0 +1,17 @@
+[sqruff]
+dialect = duckdb
+sql_file_exts = .sql,.sql.j2,.dml,.ddl
+large_file_skip_byte_limit = 0
+exclude rules = LT05
+processes = -1
+line_lenght = 120
+
+[sqruff:rules:capitalisation.identifiers]
+capitalisation_policy = lower
+
+[sqruff:rules:capitalisation.keywords]
+capitalisation_policy = lower
+
+[sqruff:layout:type:comma]
+line_position = trailing
+spacing_before = touch

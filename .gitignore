@@ -177,3 +177,11 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# csv
+*.csv
+
+# txt
+*.txt
+src/QOF_visualisation/sources/PCD_reference_set
+src/QOF_visualisation/sources/epraccur

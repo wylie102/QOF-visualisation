@@ -1,0 +1,20 @@
+copy (
+    select
+        "REGION_ODS_CODE" as region_ods_code,
+        "REGION_ONS_CODE" as region_ons_code,
+        "REGION_NAME" as region_name,
+        "ICB_ODS_CODE" as icb_ods_code,
+        "ICB_ONS_CODE" as icb_ons_code,
+        "ICB_NAME" as icb_name,
+        "SUB_ICB_ODS_CODE" as sub_icb_ods_code,
+        "SUB_ICB_ONS_CODE" as sub_icb_ons_code,
+        "SUB_ICB_NAME" as sub_icb_name,
+        "PCN_ODS_CODE" as pcn_ods_code,
+        "PCN_NAME" as pcn_name,
+        "PRACTICE_CODE" as practice_code,
+        "PRACTICE_NAME" as practice_name
+    from
+        'sources/QOF_2022_2023/MAPPING_NHS_GEOGRAPHIES_2223.csv'
+)
+
+to 'sources/gp_organisations_2022_2023.parquet' (format parquet);
