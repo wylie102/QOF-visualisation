@@ -29,7 +29,7 @@ source_url_dict: dict[str, str] = {
 
 pattern_dict = {
     "achievement": "ACHIEVEMENT_*.csv",
-    "nhs_organisations": "MAPPING_INDICATORS_*.csv",
+    "nhs_organisations": "MAPPING_NHS_GEOGRAPHIES_*.csv",
     "pcd_reference_set": "20241205_PCD_Output_Descriptions.csv",
     "gp_location_info": "epraccur.csv",
 }
