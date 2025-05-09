@@ -7,7 +7,6 @@ import plotly.express as px
 import plotly.graph_objs as go
 from dash import Input, Output, callback_context, dcc, html
 
-# ─── DuckDB setup ────────────────────────────────────────────────────────────
 conn = duckdb.connect()
 percent_achieved = conn.sql(
     "SELECT * FROM './sources/Percent_achieved.parquet' WHERE REGISTER IS NULL;"
@@ -42,7 +41,6 @@ national_df = conn.sql("""
     ORDER BY GROUP_CODE
 """).df()
 
-# ─── Dash layout ─────────────────────────────────────────────────────────────
 app = dash.Dash(__name__)
 
 app.layout = html.Div(
@@ -88,12 +86,10 @@ app.layout = html.Div(
 )
 
 
-# ─── Helper: markdown‑safe wrap (80 chars) ───────────────────────────────────
 def wrap_md(text: str, width: int = 80) -> str:
     return "  \n".join(textwrap.wrap(text, width))
 
 
-# ─── Main callback: update map, description ──────────────────────────────────
 @app.callback(
     Output("map-graph", "figure"),
     Output("indicator-description", "children"),
@@ -144,9 +140,6 @@ def update_map(indicator: str, bucket: str):
     fig.update_layout(margin=dict(r=0, t=0, l=0, b=0))
 
     return fig, dcc.Markdown(desc_md)
-
-
-# ─── Second callback: bar chart on point click ───────────────────────────────
 
 
 def blank_fig():

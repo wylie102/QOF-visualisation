@@ -494,6 +494,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/fe/26/bca4d737a9acea25e94c19940a780bbf0be64a691f7caf3a68467d3a5838/googlemaps-4.10.0.tar.gz", hash = "sha256:3055fcbb1aa262a9159b589b5e6af762b10e80634ae11c59495bd44867e47d88", size = 33056, upload-time = "2023-01-26T16:45:02.501Z" }
 
 [[package]]
+name = "graphviz"
+version = "0.20.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fa/83/5a40d19b8347f017e417710907f824915fba411a9befd092e52746b63e9f/graphviz-0.20.3.zip", hash = "sha256:09d6bc81e6a9fa392e7ba52135a9d49f1ed62526f96499325930e87ca1b5925d", size = 256455, upload-time = "2024-03-21T07:50:45.772Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/00/be/d59db2d1d52697c6adc9eacaf50e8965b6345cc143f671e1ed068818d5cf/graphviz-0.20.3-py3-none-any.whl", hash = "sha256:81f848f2904515d8cd359cc611faba817598d2feaac4027b266aa3eda7b3dde5", size = 47126, upload-time = "2024-03-21T07:50:43.091Z" },
+]
+
+[[package]]
 name = "h11"
 version = "0.14.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1129,6 +1138,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/02/65/ad2bc85f7377f5cfba5d4466d5474423a3fb7f6a97fd807c06f92dd3e721/plotly-6.0.1-py3-none-any.whl", hash = "sha256:4714db20fea57a435692c548a4eb4fae454f7daddf15f8d8ba7e1045681d7768", size = 14805757, upload-time = "2025-03-17T15:02:18.73Z" },
 ]
 
+[package.optional-dependencies]
+express = [
+    { name = "numpy" },
+]
+
 [[package]]
 name = "pluggy"
 version = "1.5.0"
@@ -1439,10 +1453,11 @@ dependencies = [
     { name = "googlemaps" },
     { name = "httpx" },
     { name = "pandas" },
-    { name = "plotly" },
+    { name = "plotly", extra = ["express"] },
     { name = "polars" },
     { name = "pyarrow" },
     { name = "python-dotenv" },
+    { name = "requests" },
     { name = "sqlglot" },
     { name = "sqlmesh" },
 ]
@@ -1452,6 +1467,7 @@ dev = [
     { name = "basedpyright" },
     { name = "codespell" },
     { name = "funlog" },
+    { name = "graphviz" },
     { name = "pytest" },
     { name = "rich" },
     { name = "ruff" },
@@ -1467,10 +1483,11 @@ requires-dist = [
     { name = "googlemaps", specifier = ">=4.10.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "pandas", specifier = ">=2.2.3" },
-    { name = "plotly", specifier = ">=6.0.1" },
+    { name = "plotly", extras = ["express"], specifier = ">=6.0.1" },
     { name = "polars", specifier = ">=1.28.1" },
     { name = "pyarrow", specifier = ">=20.0.0" },
     { name = "python-dotenv", specifier = ">=1.1.0" },
+    { name = "requests", specifier = ">=2.32.3" },
     { name = "sqlglot", specifier = ">=26.16.2" },
     { name = "sqlmesh", specifier = ">=0.177.0" },
 ]
@@ -1480,6 +1497,7 @@ dev = [
     { name = "basedpyright", specifier = ">=1.28.2" },
     { name = "codespell", specifier = ">=2.4.1" },
     { name = "funlog", specifier = ">=0.2.0" },
+    { name = "graphviz", specifier = ">=0.20.3" },
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "rich", specifier = ">=13.9.4" },
     { name = "ruff", specifier = ">=0.11.0" },

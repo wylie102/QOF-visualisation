@@ -41,10 +41,11 @@ dependencies = [
   "googlemaps>=4.10.0",
   "httpx>=0.28.1",
   "pandas>=2.2.3",
-  "plotly>=6.0.1",
+  "plotly[express]>=6.0.1",
   "polars>=1.28.1",
   "pyarrow>=20.0.0",
   "python-dotenv>=1.1.0",
+  "requests>=2.32.3",
   "sqlglot>=26.16.2",
   "sqlmesh>=0.177.0",
 ]
@@ -63,6 +64,7 @@ dev = [
   "sqlfluff>=3.4.0",
   "sqruff>=0.26.3",
   "sqlfluff-templater-dbt>=3.4.0",
+  "graphviz>=0.20.3",
 ]
 
 [project.scripts]

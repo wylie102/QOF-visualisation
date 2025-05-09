@@ -90,3 +90,6 @@ def create_address_list(address_csv: Path, gp_list_csv: Path) -> Path:
 address_csv, gp_list_csv = get_input_paths()
 parquet_path = create_address_list(address_csv[0], gp_list_csv[0])
 print(str(parquet_path))
+
+if __name__ == "__main__":
+    pass

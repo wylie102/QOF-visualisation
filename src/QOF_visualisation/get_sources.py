@@ -1,27 +1,37 @@
+#!/usr/bin/env -S uv run --script
+
 import io
 import os
 import shutil
 import zipfile
 from pathlib import Path
 
+import duckdb
 import requests
 from dotenv import load_dotenv
+from duckdb import DuckDBPyConnection
 from requests.adapters import HTTPAdapter
+from requests.models import Response
 from urllib3.util.retry import Retry
 
+from QOF_visualisation.csv_to_parquet import csv_to_parquet
+
 # Dict of QOF year csv zip urls.
-raw_qof_url_dict: dict[str, str] = {
-    "QOF_2019_2020": "https://files.digital.nhs.uk/E2/BF16AA/QOF_1920.zip",
-    "QOF_2020_2021": "https://files.digital.nhs.uk/AC/3C964F/QOF2021_v2.zip",
-    "QOF_2021_2022": "https://files.digital.nhs.uk/90/6F833F/QOF_2122_V2.zip",
-    "QOF_2022_2023": "https://files.digital.nhs.uk/32/40B931/QOF%202022-23%20Raw%20data%20.csv%20files.zip",
-    "QOF_2023_2024": "https://files.digital.nhs.uk/DA/975A29/QOF2324.zip",
+source_url_dict: dict[str, str] = {
+    "qof_achievement_2019_2020": "https://files.digital.nhs.uk/E2/BF16AA/QOF_1920.zip",
+    "qof_achievement_2020_2021": "https://files.digital.nhs.uk/AC/3C964F/QOF2021_v2.zip",
+    "qof_achievement_2021_2022": "https://files.digital.nhs.uk/90/6F833F/QOF_2122_V2.zip",
+    "qof_achievement_2022_2023": "https://files.digital.nhs.uk/32/40B931/QOF%202022-23%20Raw%20data%20.csv%20files.zip",
+    "qof_achievement_2023_2024": "https://files.digital.nhs.uk/DA/975A29/QOF2324.zip",
+    "pcd_reference_set": "https://digital.nhs.uk/binaries/content/assets/website-assets/data-and-information/data-collections/qof/primary-care-domain-reference-set-portal/20240531_pcd_refset_content_text_files.zip",
+    "gp_location_info": "https://files.digital.nhs.uk/assets/ods/current/epraccur.zip",
 }
 
-# Dict of supplementary data.
-supplementary_url_dict: dict[str, str] = {
-    "PCD_reference_set": "https://digital.nhs.uk/binaries/content/assets/website-assets/data-and-information/data-collections/qof/primary-care-domain-reference-set-portal/20240531_pcd_refset_content_text_files.zip",
-    "epraccur": "https://files.digital.nhs.uk/assets/ods/current/epraccur.zip",
+pattern_dict = {
+    "achievement": "ACHIEVEMENT_*.csv",
+    "nhs_organisations": "MAPPING_INDICATORS_*.csv",
+    "pcd_reference_set": "20241205_PCD_Output_Descriptions.csv",
+    "gp_location_info": "epraccur.csv",
 }
 
 
@@ -42,10 +52,9 @@ def get_with_retry(url: str, retries: int = 5, backoff: float = 0.5) -> requests
     return session.get(url, timeout=10)
 
 
-def download_and_extract_zip(url: str, target_dir: Path) -> Path:
+def download_and_extract_zip(target_dir: Path, url: str) -> Path:
     """Dowload and extract a zip folder to the target directory."""
-    print(f"Downloading: {url}")
-    resp = get_with_retry(url)
+    resp: Response = get_with_retry(url)
     resp.raise_for_status()
 
     with zipfile.ZipFile(io.BytesIO(resp.content)) as z:
@@ -56,10 +65,14 @@ def download_and_extract_zip(url: str, target_dir: Path) -> Path:
                 shutil.rmtree(target_dir)
         z.extractall(target_dir)
 
+    # Change .txt files to csv files.
+    for txt_file in target_dir.rglob("*.txt"):
+        txt_file.rename(txt_file.with_suffix(".csv"))
+
     # Re-encode CSV files to UTF-8
     for csv_file in target_dir.rglob("*.csv"):
-        content: str = csv_file.read_text(encoding="latin1")
-        csv_file.write_text(content, encoding="utf-8")
+        csv_content: str = csv_file.read_text(encoding="latin1")
+        csv_file.write_text(csv_content, encoding="utf-8")
 
     return target_dir
 
@@ -67,6 +80,7 @@ def download_and_extract_zip(url: str, target_dir: Path) -> Path:
 def assign_target_directory() -> Path:
     """
     Assign the target directory.
+
     Default is ./data created in the current working directory.
     A target directory string can be passed in from a .env file.
     The string should be assigned to TARGET_DIRECTORY
@@ -85,43 +99,49 @@ def assign_target_directory() -> Path:
     return dir_path
 
 
-def get_sources() -> list[dict[str, Path]]:
-    """
-    Download and unzip QOF and supplementary sources.
-    Sources currently include QOF practice level data from years 2019/2020 - 2023/2024.
-
-    By default all files will be downloaded to a "sources" directory in the current working directory.
-    You can also pass in a file string by storing it in a .env file in the root directory,
-    assigned to the variable TARGET_DIRECTORY.
-    e.g. TARGET_DIRECTORY = "./sources"
-    """
-
-    target_dir: Path = assign_target_directory()
-    # Download each qof year to a named directory within the target directory.
-    # Store paths in qof_path_dict
-    qof_path_dict: dict[str, Path] = {}
-    for qof_year, url in raw_qof_url_dict.items():
-        qof_year_path: Path = download_and_extract_zip(url=url, target_dir=target_dir / qof_year)
-        qof_path_dict[qof_year] = qof_year_path
-
-    # Download each supplementary folder to a named directory within the target directory.
-    # Store paths in supplementary_path_dict
-    supplementary_path_dict: dict[str, Path] = {}
-    for supplementary_file, url in supplementary_url_dict.items():
-        supplementary_file_path: Path = download_and_extract_zip(
-            url=url, target_dir=target_dir / supplementary_file
-        )
-        supplementary_path_dict[supplementary_file] = supplementary_file_path
-
-    return [qof_path_dict, supplementary_path_dict]
-
-
 def main() -> None:
     """Main function for get_sources.py"""
-    source_dict_list: list[dict[str, Path]] = get_sources()
-    for source_dict in source_dict_list:
-        for name, path in source_dict.items():
-            print(f"{name} downloaded to {path}.")
+
+    # Create ducbdk connection and assign target directory.
+    target_dir: Path = assign_target_directory()
+    conn: DuckDBPyConnection = duckdb.connect()
+
+    # Download sources and store csv paths in a dict.
+    source_csv_dict: dict[str, Path] = {
+        name: download_and_extract_zip(target_dir / name, url)
+        for name, url in source_url_dict.items()
+    }
+
+    # Initialize parquet dict.
+    souce_parquet_dict: dict[str, Path] = {}
+
+    # Create qof dir list then convert required files to parquet.
+    qof_name_list: list[str] = [name for name in source_csv_dict.keys() if name.startswith("qof")]
+    for name in qof_name_list:
+        # Convert achievement files.
+        souce_parquet_dict[name] = csv_to_parquet(
+            conn, source_csv_dict[name], pattern_dict["achievement"]
+        )
+
+        # Convert nhs nhs_organisation files.
+        nhs_organisations_name = "nhs_organisations_" + name[-9:]
+        souce_parquet_dict[nhs_organisations_name] = csv_to_parquet(
+            conn, source_csv_dict[name], pattern_dict["nhs_organisations"], nhs_organisations_name
+        )
+
+    # Convert pcd_reference_set file.
+    souce_parquet_dict["pcd_reference_set"] = csv_to_parquet(
+        conn, source_csv_dict["pcd_reference_set"], pattern_dict["pcd_reference_set"]
+    )
+
+    # Convert gp_location_info file.
+    souce_parquet_dict["gp_location_info"] = csv_to_parquet(
+        conn, source_csv_dict["gp_location_info"], pattern_dict["gp_location_info"]
+    )
+
+    # Clean up csv files.
+    for path in source_csv_dict.values():
+        shutil.rmtree(path)
 
 
 if __name__ == "__main__":

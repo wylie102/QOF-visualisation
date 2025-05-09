@@ -185,3 +185,8 @@ cython_debug/
 *.txt
 src/QOF_visualisation/sources/PCD_reference_set
 src/QOF_visualisation/sources/epraccur
+
+# dbt
+target/
+dbt_packages/
+logs/
