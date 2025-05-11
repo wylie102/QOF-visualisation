@@ -17,7 +17,7 @@ load_dotenv()
 
 API_KEY: str | None = os.getenv("GOOGLE_MAPS_API_KEY")
 TARGET_DIR: Path = Path(os.getenv("TARGET_DIRECTORY", ""))
-MAX_CONCURRENT: int = 10  # tune to your quota
+MAX_CONCURRENT: int = 10
 RETRIES: int = 3
 
 

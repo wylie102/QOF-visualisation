@@ -1,12 +1,13 @@
 from pathlib import Path
 
 import duckdb
+from duckdb import DuckDBPyConnection
 
-conn = duckdb.connect()
-sources = Path("./sources/").resolve()
+conn: DuckDBPyConnection = duckdb.connect()
+sources: Path = Path("./sources/").resolve()
 
 output_file_name = "gp_location_info.parquet"
-output_str = str(sources / output_file_name)
+output_str: str = str(sources / output_file_name)
 
 address_file_name = "gp_location_info.parquet"
 
