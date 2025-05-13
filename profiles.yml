@@ -1,0 +1,6 @@
+qof_visualisation:
+  outputs:
+    dev:
+      type: duckdb
+      path: qof_vis.db
+  target: dev

@@ -1,0 +1,14 @@
+models:
+  - name: stg_pcd__reference_set
+    description: Snomed reference set with QOF Outcome Descriptions.
+    columns:
+      - name: service_id
+        data_type: varchar
+      - name: ruleset_id
+        data_type: varchar
+      - name: output_id
+        data_type: varchar
+      - name: output_description
+        data_type: varchar
+      - name: type
+        data_type: varchar

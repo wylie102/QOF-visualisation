@@ -1,0 +1,90 @@
+models:
+  - name: stg_ind__achievement_2019_2020
+    description: indicator mapping for business year 2019-2020
+    columns:
+      - name: indicator_code
+        data_type: varchar
+      - name: indicator_point_value
+        data_type: double
+      - name: group_code
+        data_type: varchar
+      - name: group_description
+        data_type: varchar
+      - name: domain_code
+        data_type: varchar
+      - name: domain_description
+        data_type: varchar
+      - name: patient_list_type
+        data_type: varchar
+
+  - name: stg_ind__achievement_2020_2021
+    description: indicator mapping for business year 2020-2021
+    columns:
+      - name: indicator_code
+        data_type: varchar
+      - name: indicator_point_value
+        data_type: double
+      - name: group_code
+        data_type: varchar
+      - name: group_description
+        data_type: varchar
+      - name: domain_code
+        data_type: varchar
+      - name: domain_description
+        data_type: varchar
+      - name: patient_list_type
+        data_type: varchar
+
+  - name: stg_ind__achievement_2021_2022
+    description: indicator mapping for business year 2021-2022
+    columns:
+      - name: indicator_code
+        data_type: varchar
+      - name: indicator_point_value
+        data_type: double
+      - name: group_code
+        data_type: varchar
+      - name: group_description
+        data_type: varchar
+      - name: domain_code
+        data_type: varchar
+      - name: domain_description
+        data_type: varchar
+      - name: patient_list_type
+        data_type: varchar
+
+  - name: stg_ind__achievement_2022_2023
+    description: indicator mapping for business year 2022-2023
+    columns:
+      - name: indicator_code
+        data_type: varchar
+      - name: indicator_point_value
+        data_type: double
+      - name: group_code
+        data_type: varchar
+      - name: group_description
+        data_type: varchar
+      - name: domain_code
+        data_type: varchar
+      - name: domain_description
+        data_type: varchar
+      - name: patient_list_type
+        data_type: varchar
+
+  - name: stg_ind__achievement_2023_2024
+    description: indicator mapping for business year 2020-2021
+    columns:
+      - name: indicator_code
+        data_type: varchar
+      - name: indicator_point_value
+        data_type: double
+      - name: group_code
+        data_type: varchar
+      - name: group_description
+        data_type: varchar
+      - name: domain_code
+        data_type: varchar
+      - name: domain_description
+        data_type: varchar
+      - name: patient_list_type
+        data_type: varchar

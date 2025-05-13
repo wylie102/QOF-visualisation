@@ -1,0 +1,155 @@
+models:
+  - name: stg_nhs__structures_2019_2020
+    description: NHS organisational structures for business year 2019-2020
+    columns:
+      - name: region_ods_code
+        data_type: varchar
+      - name: region_ons_code
+        data_type: varchar
+      - name: region_name
+        data_type: varchar
+      - name: stp_ods_code
+        data_type: varchar
+      - name: stp_ons_code
+        data_type: varchar
+      - name: stp_name
+        data_type: varchar
+      - name: ccg_ods_code
+        data_type: varchar
+      - name: ccg_ons_code
+        data_type: varchar
+      - name: ccg_name
+        data_type: varchar
+      - name: pcn_ods_code
+        data_type: varchar
+      - name: pcn_ons_code
+        data_type: varchar
+      - name: pcn_name
+        data_type: varchar
+      - name: practice_code
+        data_type: varchar
+      - name: practice_name
+
+  - name: stg_nhs__structures_2020_2021
+    description: NHS organisational structures for business year 2020-2021
+    columns:
+      - name: region_ods_code
+        data_type: varchar
+      - name: region_ons_code
+        data_type: varchar
+      - name: region_name
+        data_type: varchar
+      - name: stp_ods_code
+        data_type: varchar
+      - name: stp_ons_code
+        data_type: varchar
+      - name: stp_name
+        data_type: varchar
+      - name: ccg_ods_code
+        data_type: varchar
+      - name: ccg_ons_code
+        data_type: varchar
+      - name: ccg_name
+        data_type: varchar
+      - name: pcn_ods_code
+        data_type: varchar
+      - name: pcn_ons_code
+        data_type: varchar
+      - name: pcn_name
+        data_type: varchar
+      - name: practice_code
+        data_type: varchar
+      - name: practice_name
+
+  - name: stg_nhs__structures_2021_2022
+    description: NHS organisational structures for business year 2021-2022
+    columns:
+      - name: region_ods_code
+        data_type: varchar
+      - name: region_ons_code
+        data_type: varchar
+      - name: region_name
+        data_type: varchar
+      - name: stp_ods_code
+        data_type: varchar
+      - name: stp_ons_code
+        data_type: varchar
+      - name: stp_name
+        data_type: varchar
+      - name: ccg_ods_code
+        data_type: varchar
+      - name: ccg_ons_code
+        data_type: varchar
+      - name: ccg_name
+        data_type: varchar
+      - name: pcn_ods_code
+        data_type: varchar
+      - name: pcn_ons_code
+        data_type: varchar
+      - name: pcn_name
+        data_type: varchar
+      - name: practice_code
+        data_type: varchar
+      - name: practice_name
+
+  - name: stg_nhs__structures_2022_2023
+    description: NHS organisational structures for business year 2022-2023
+    columns:
+      - name: region_ods_code
+        data_type: varchar
+      - name: region_ons_code
+        data_type: varchar
+      - name: region_name
+        data_type: varchar
+      - name: stp_ods_code
+        data_type: varchar
+      - name: stp_ons_code
+        data_type: varchar
+      - name: stp_name
+        data_type: varchar
+      - name: ccg_ods_code
+        data_type: varchar
+      - name: ccg_ons_code
+        data_type: varchar
+      - name: ccg_name
+        data_type: varchar
+      - name: pcn_ods_code
+        data_type: varchar
+      - name: pcn_ons_code
+        data_type: varchar
+      - name: pcn_name
+        data_type: varchar
+      - name: practice_code
+        data_type: varchar
+      - name: practice_name
+
+  - name: stg_nhs__structures_2023_2024
+    description: NHS organisational structures for business year 2023-2024
+    columns:
+      - name: region_ods_code
+        data_type: varchar
+      - name: region_ons_code
+        data_type: varchar
+      - name: region_name
+        data_type: varchar
+      - name: stp_ods_code
+        data_type: varchar
+      - name: stp_ons_code
+        data_type: varchar
+      - name: stp_name
+        data_type: varchar
+      - name: ccg_ods_code
+        data_type: varchar
+      - name: ccg_ons_code
+        data_type: varchar
+      - name: ccg_name
+        data_type: varchar
+      - name: pcn_ods_code
+        data_type: varchar
+      - name: pcn_ons_code
+        data_type: varchar
+      - name: pcn_name
+        data_type: varchar
+      - name: practice_code
+        data_type: varchar
+      - name: practice_name

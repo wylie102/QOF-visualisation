@@ -37,6 +37,7 @@ classifiers = [
 
 dependencies = [
   "dash>=3.0.4",
+  "dbt-duckdb>=1.9.3",
   "duckdb>=1.2.2",
   "googlemaps>=4.10.0",
   "httpx>=0.28.1",

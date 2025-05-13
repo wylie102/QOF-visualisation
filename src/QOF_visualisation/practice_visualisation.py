@@ -7,7 +7,7 @@ import plotly.express as px
 import plotly.graph_objs as go
 from dash import Input, Output, callback_context, dcc, html
 
-conn = duckdb.connect()
+conn = duckdb.connect("./sources/qof.db")
 percent_achieved = conn.sql(
     "SELECT * FROM './sources/Percent_achieved.parquet' WHERE REGISTER IS NULL;"
 )

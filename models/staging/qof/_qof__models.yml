@@ -1,0 +1,60 @@
+models:
+  - name: stg_qof__achievement_2019_2020
+    description: QOF achievements for business year 2019-2020
+    columns:
+      - name: practice_code
+        data_type: varchar
+      - name: indicator_code
+        data_type: varchar
+      - name: measure
+        data_type: varchar
+      - name: value
+        data_type: double
+
+  - name: stg_qof__achievement_2020_2021
+    description: QOF achievements for business year 2020-2021
+    columns:
+      - name: practice_code
+        data_type: varchar
+      - name: indicator_code
+        data_type: varchar
+      - name: measure
+        data_type: varchar
+      - name: value
+        data_type: double
+
+  - name: stg_qof__achievement_2021_2022
+    description: QOF achievements for business year 2021-2022
+    columns:
+      - name: practice_code
+        data_type: varchar
+      - name: indicator_code
+        data_type: varchar
+      - name: measure
+        data_type: varchar
+      - name: value
+        data_type: double
+
+  - name: stg_qof__achievement_2022_2023
+    description: QOF achievements for business year 2022-2023
+    columns:
+      - name: practice_code
+        data_type: varchar
+      - name: indicator_code
+        data_type: varchar
+      - name: measure
+        data_type: varchar
+      - name: value
+        data_type: double
+
+  - name: stg_qof__achievement_2023_2024
+    description: QOF achievements for business year 2020-2021
+    columns:
+      - name: practice_code
+        data_type: varchar
+      - name: indicator_code
+        data_type: varchar
+      - name: measure
+        data_type: varchar
+      - name: value
+        data_type: double

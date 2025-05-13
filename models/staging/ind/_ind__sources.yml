@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: ind
+    meta:
+      source_format: "parquet"
+      external_location: "./src/QOF_visualisation/sources/{name}.parquet"
+    tables:
+      - name: qof_indicators_2019_2020
+      - name: qof_indicators_2020_2021
+      - name: qof_indicators_2021_2022
+      - name: qof_indicators_2022_2023
+      - name: qof_indicators_2023_2024

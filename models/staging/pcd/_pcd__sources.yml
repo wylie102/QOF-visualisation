@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: pcd
+    meta:
+      source_format: "parquet"
+      external_location: "./src/QOF_visualisation/sources/{name}.parquet"
+    tables:
+      - name: reference_set

@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+  - name: nhs
+    meta:
+      external_location: "./src/QOF_visualisation/sources/{name}.parquet"
+    tables:
+      - name: structures_2019_2020
+      - name: structures_2020_2021
+      - name: structures_2021_2022
+      - name: structures_2022_2023
+      - name: structures_2023_2024

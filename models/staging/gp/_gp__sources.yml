@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: gp
+    meta:
+      source_format: "parquet"
+      external_location: "./src/QOF_visualisation/sources/{name}.parquet"
+    tables:
+      - name: practice_location_info

@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: qof
+    meta:
+      source_format: "parquet"
+      external_location: "./src/QOF_visualisation/sources/{name}.parquet"
+    tables:
+      - name: achievement_2019_2020
+      - name: achievement_2020_2021
+      - name: achievement_2021_2022
+      - name: achievement_2022_2023
+      - name: achievement_2023_2024

@@ -18,20 +18,21 @@ from QOF_visualisation.csv_to_parquet import csv_to_parquet
 
 # Dict of QOF year csv zip urls.
 source_url_dict: dict[str, str] = {
-    "qof_achievement_2019_2020": "https://files.digital.nhs.uk/E2/BF16AA/QOF_1920.zip",
-    "qof_achievement_2020_2021": "https://files.digital.nhs.uk/AC/3C964F/QOF2021_v2.zip",
-    "qof_achievement_2021_2022": "https://files.digital.nhs.uk/90/6F833F/QOF_2122_V2.zip",
-    "qof_achievement_2022_2023": "https://files.digital.nhs.uk/32/40B931/QOF%202022-23%20Raw%20data%20.csv%20files.zip",
-    "qof_achievement_2023_2024": "https://files.digital.nhs.uk/DA/975A29/QOF2324.zip",
-    "pcd_reference_set": "https://digital.nhs.uk/binaries/content/assets/website-assets/data-and-information/data-collections/qof/primary-care-domain-reference-set-portal/20240531_pcd_refset_content_text_files.zip",
-    "gp_location_info": "https://files.digital.nhs.uk/assets/ods/current/epraccur.zip",
+    "achievement_2019_2020": "https://files.digital.nhs.uk/E2/BF16AA/QOF_1920.zip",
+    "achievement_2020_2021": "https://files.digital.nhs.uk/AC/3C964F/QOF2021_v2.zip",
+    "achievement_2021_2022": "https://files.digital.nhs.uk/90/6F833F/QOF_2122_V2.zip",
+    "achievement_2022_2023": "https://files.digital.nhs.uk/32/40B931/QOF%202022-23%20Raw%20data%20.csv%20files.zip",
+    "achievement_2023_2024": "https://files.digital.nhs.uk/DA/975A29/QOF2324.zip",
+    "reference_set": "https://digital.nhs.uk/binaries/content/assets/website-assets/data-and-information/data-collections/qof/primary-care-domain-reference-set-portal/20240531_pcd_refset_content_text_files.zip",
+    "location_info": "https://files.digital.nhs.uk/assets/ods/current/epraccur.zip",
 }
 
 pattern_dict = {
     "achievement": "ACHIEVEMENT_*.csv",
     "nhs_organisations": "MAPPING_NHS_GEOGRAPHIES_*.csv",
-    "pcd_reference_set": "20241205_PCD_Output_Descriptions.csv",
-    "gp_location_info": "epraccur.csv",
+    "qof_indicators": "MAPPING_INDICATORS_*.csv",
+    "reference_set": "20241205_PCD_Output_Descriptions.csv",
+    "location_info": "epraccur.csv",
 }
 
 
@@ -116,27 +117,35 @@ def main() -> None:
     souce_parquet_dict: dict[str, Path] = {}
 
     # Create qof dir list then convert required files to parquet.
-    qof_name_list: list[str] = [name for name in source_csv_dict.keys() if name.startswith("qof")]
+    qof_name_list: list[str] = [
+        name for name in source_csv_dict.keys() if name.startswith("achievement")
+    ]
     for name in qof_name_list:
         # Convert achievement files.
         souce_parquet_dict[name] = csv_to_parquet(
             conn, source_csv_dict[name], pattern_dict["achievement"]
         )
 
-        # Convert nhs nhs_organisation files.
-        nhs_organisations_name = "nhs_organisations_" + name[-9:]
+        # Convert nhs organisation files.
+        nhs_organisations_name = "structures_" + name[-9:]
         souce_parquet_dict[nhs_organisations_name] = csv_to_parquet(
             conn, source_csv_dict[name], pattern_dict["nhs_organisations"], nhs_organisations_name
         )
 
+        # Convert qof indicator files.
+        qof_indicators_name = "qof_indicators_" + name[-9:]
+        souce_parquet_dict[qof_indicators_name] = csv_to_parquet(
+            conn, source_csv_dict[name], pattern_dict["qof_indicators"], qof_indicators_name
+        )
+
     # Convert pcd_reference_set file.
-    souce_parquet_dict["pcd_reference_set"] = csv_to_parquet(
-        conn, source_csv_dict["pcd_reference_set"], pattern_dict["pcd_reference_set"]
+    souce_parquet_dict["reference_set"] = csv_to_parquet(
+        conn, source_csv_dict["reference_set"], pattern_dict["reference_set"]
     )
 
     # Convert gp_location_info file.
-    souce_parquet_dict["gp_location_info"] = csv_to_parquet(
-        conn, source_csv_dict["gp_location_info"], pattern_dict["gp_location_info"]
+    souce_parquet_dict["location_info"] = csv_to_parquet(
+        conn, source_csv_dict["location_info"], pattern_dict["location_info"]
     )
 
     # Clean up csv files.
