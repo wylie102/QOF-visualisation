@@ -15,31 +15,13 @@ class DatabaseConnection:
 
     def __init__(self, db_path: Path) -> None:
         """Initialize database connection."""
-        # Connect to in-memory database
         self.conn: duckdb.DuckDBPyConnection | None = duckdb.connect(":memory:")
 
         # Connect to database in read-only mode to avoid locking issues
-        self.conn.execute(f"ATTACH DATABASE '{db_path}' AS qof_vis (READ_ONLY)")
-
-        # Create materialized views for frequently used queries
-        self._create_materialized_views()
+        self.conn.execute(f"ATTACH DATABASE '{db_path}' AS source_db (READ_ONLY)")
 
         # Register cleanup handler
         atexit.register(self.cleanup)
-
-    def _create_materialized_views(self) -> None:
-        """Cache commonly used data in memory for better performance."""
-        # Cache national averages
-        self.conn.execute("""
-            CREATE TABLE national_averages AS 
-            SELECT 
-                reporting_year,
-                group_description,
-                AVG(percentage_patients_achieved) as avg_achievement
-            FROM qof_vis.fct__national_achievement
-            WHERE percentage_patients_achieved IS NOT NULL
-            GROUP BY reporting_year, group_description
-        """)
 
     def query_df(self, sql: str) -> pl.DataFrame:
         """Execute query and return results as a Polars DataFrame."""
