@@ -1,26 +1,26 @@
-# QOF visualisation – Dash 3 · Plotly ≥5.24 · DuckDB
+"""QOF Visualization using Dash, Plotly, and DuckDB."""
+
 from __future__ import annotations
 
 import textwrap
-from pathlib import Path
-from typing import Final, cast
+from typing import Final
 
 import dash
-import duckdb
-import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import polars as pl
 from dash import Input, Output, State, ctx, dcc, html
 from dash.development.base_component import Component
 
-DB_PATH: Final = Path("../../qof_vis.db").resolve()
+from QOF_visualisation.db_connection import query
 
+# Constants for organization levels and achievement buckets
 ORG_TABLE: dict[str, str] = {
-    "Practice": "fct__practice_achievement",
-    "PCN": "fct__pcn_achievement",
-    "Sub-ICB": "fct__sub_icb_achievement",
-    "ICB": "fct__icb_achievement",
-    "Region": "fct__region_achievement",
+    "Practice": "qof_vis.fct__practice_achievement",
+    "PCN": "qof_vis.fct__pcn_achievement",
+    "Sub-ICB": "qof_vis.fct__sub_icb_achievement",
+    "ICB": "qof_vis.fct__icb_achievement",
+    "Region": "qof_vis.fct__region_achievement",
 }
 
 BUCKET_SQL: dict[str, str] = {
@@ -33,21 +33,18 @@ BUCKET_SQL: dict[str, str] = {
 DEFAULT_BUCKET: Final[str] = "80-100 %"
 
 
-def query(sql: str) -> pd.DataFrame:
-    with duckdb.connect(DB_PATH.as_posix(), read_only=True) as con:
-        return con.sql(sql).df()
-
-
 def md_wrap(text: str | None, width: int = 80) -> str:
+    """Wrap text to specified width with line breaks."""
     if not text:
         return ""
     return "  \n".join(textwrap.wrap(text, width))
 
 
 def make_blank_map() -> go.Figure:
+    """Create an empty map figure."""
     fig = go.Figure()
     fig.update_layout(
-        map=dict(style="carto-positron", center={"lat": 53, "lon": -1.5}, zoom=5),
+        mapbox=dict(style="carto-positron", center={"lat": 53, "lon": -1.5}, zoom=5),
         margin=dict(t=0, r=0, l=0, b=0),
         height=700,
     )
@@ -55,43 +52,59 @@ def make_blank_map() -> go.Figure:
 
 
 def make_blank_bar(msg: str = "Click a point") -> go.Figure:
+    """Create an empty bar chart figure with message."""
     fig = go.Figure()
     fig.update_layout(
-        title=msg, xaxis_visible=False, yaxis_visible=False, margin=dict(t=40, r=10, l=10, b=10)
+        title=msg,
+        xaxis=dict(visible=True, range=[0, 110], title="% Achieved"),
+        yaxis=dict(visible=False),
+        margin=dict(t=40, r=10, l=10, b=40),
+        showlegend=False,
     )
     return fig
 
 
-pairs: pd.DataFrame = query(
-    "SELECT DISTINCT indicator_code, reporting_year FROM fct__practice_achievement"
-)
-ALL_YEARS: list[int] = sorted([int(y) for y in cast(pd.Series, pairs.reporting_year.unique())])
-ALL_INDS: list[str] = sorted([str(i) for i in cast(pd.Series, pairs.indicator_code.unique())])
-
-# Cache indicator codes available for each year at startup
-CODES_BY_YEAR: dict[int, list[str]] = {}
-codes_df: pd.DataFrame = query("""
-    SELECT DISTINCT indicator_code, reporting_year
-    FROM fct__practice_achievement
+# Initialize available years and indicators
+pairs: pl.DataFrame = query("""
+    SELECT DISTINCT indicator_code, reporting_year 
+    FROM qof_vis.fct__practice_achievement 
     WHERE percentage_patients_achieved IS NOT NULL
 """)
-for year in cast(pd.Series, codes_df.reporting_year.unique()):
-    CODES_BY_YEAR[int(year)] = sorted(
-        codes_df.loc[codes_df.reporting_year == year, "indicator_code"]
-        .astype(str)
+
+ALL_YEARS: list[int] = sorted([int(y) for y in pairs["reporting_year"].unique().to_list()])
+ALL_INDS: list[str] = sorted([str(i) for i in pairs["indicator_code"].unique().to_list()])
+
+# Cache indicator codes by year at startup
+CODES_BY_YEAR: dict[int, list[str]] = {
+    int(year): sorted(
+        pairs.filter(pl.col("reporting_year") == year)["indicator_code"]
+        .cast(str)
         .unique()
-        .tolist()
+        .to_list()
     )
+    for year in pairs["reporting_year"].unique().to_list()
+}
 
 # Cache national averages by year at startup
-NAT_AVG_BY_YEAR: dict[int, pd.DataFrame] = {}
-nat_df: pd.DataFrame = query("""
-    SELECT reporting_year, group_description, percentage_patients_achieved
-    FROM fct__national_achievement
+nat_df: pl.DataFrame = query("""
+    WITH nat_avgs AS (
+        SELECT 
+            reporting_year,
+            group_code,
+            AVG(percentage_patients_achieved) as percentage_patients_achieved
+        FROM qof_vis.fct__national_achievement
+        WHERE percentage_patients_achieved IS NOT NULL
+        GROUP BY reporting_year, group_code
+    )
+    SELECT * FROM nat_avgs
 """)
-for year in cast(pd.Series, nat_df.reporting_year.unique()):
-    NAT_AVG_BY_YEAR[int(year)] = nat_df[nat_df.reporting_year == year].copy()
 
+NAT_AVG_BY_YEAR: dict[int, pl.DataFrame] = {
+    int(year): nat_df.filter(pl.col("reporting_year") == year).clone()
+    for year in nat_df["reporting_year"].unique().to_list()
+}
+
+# Initialize Dash app
 app = dash.Dash(__name__)
 
 DEFAULT_IND: str | None = ALL_INDS[0] if ALL_INDS else None
@@ -171,38 +184,45 @@ def sync_dropdowns(
     list[dict[str, str | bool]],
     str | None,
 ]:
-    # Always filter codes to those with data for the selected year, if a year is selected
+    """Sync dropdown options based on selected values."""
+    # Filter indicator codes by year
     if yr_val is not None:
-        valid_ind: list[str] = CODES_BY_YEAR.get(int(yr_val), [])
-        ind_opts: list[dict[str, str]] = [{"label": i, "value": i} for i in valid_ind]
+        valid_ind = CODES_BY_YEAR.get(int(yr_val), [])
+        ind_opts = [{"label": i, "value": i} for i in valid_ind]
         ind_val = ind_val if ind_val in valid_ind else (valid_ind[0] if valid_ind else None)
     else:
         ind_opts = [{"label": i, "value": i} for i in ALL_INDS]
         ind_val = ind_val if ind_val in ALL_INDS else (ALL_INDS[0] if ALL_INDS else None)
-    yr_opts: list[dict[str, int]] = [{"label": y, "value": y} for y in ALL_YEARS]
 
-    # Always show all buckets, but disable those with no data for the selected org level
-    table: str = ORG_TABLE[level_val] if level_val in ORG_TABLE else "fct__practice_achievement"
-    bucket_opts: list[dict[str, str | bool]] = []
-    for label, cond in BUCKET_SQL.items():
-        count_df = query(
-            f"""
-            SELECT COUNT(*) as n
-            FROM {table}
-            WHERE indicator_code = '{ind_val}'
-              AND reporting_year = {yr_val}
-              AND percentage_patients_achieved {cond}
-            """
-        )
-        has_data: bool = count_df.n.iloc[0] > 0
-        bucket_opts.append({"label": label, "value": label, "disabled": not has_data})
+    yr_opts = [{"label": y, "value": y} for y in ALL_YEARS]
 
-    # Set selected_bucket to DEFAULT_BUCKET if available and enabled, else first enabled
-    enabled_buckets: list[dict[str, str | bool]] = [
-        opt for opt in bucket_opts if not opt.get("disabled", False)
-    ]
-    selected_bucket: str | None = None
-    if any(
+    # Show all buckets but disable those with no data
+    table = ORG_TABLE.get(level_val or "Practice", "qof_vis.fct__practice_achievement")
+    bucket_opts = []
+
+    if ind_val is not None and yr_val is not None:
+        for label, cond in BUCKET_SQL.items():
+            count_df = query(f"""
+                SELECT COUNT(*) as n
+                FROM {table}
+                WHERE indicator_code = '{ind_val}'
+                AND reporting_year = {yr_val}
+                AND percentage_patients_achieved {cond}
+            """)
+            has_data = count_df["n"].item() > 0
+            bucket_opts.append({"label": label, "value": label, "disabled": not has_data})
+    else:
+        bucket_opts = [{"label": k, "value": k, "disabled": True} for k in BUCKET_SQL]
+
+    # Set bucket value
+    enabled_buckets = [opt for opt in bucket_opts if not opt.get("disabled", False)]
+    current_bucket = ctx.states.get("bucket.value") if hasattr(ctx, "states") else None
+
+    if current_bucket and any(
+        opt["value"] == current_bucket and not opt.get("disabled", False) for opt in bucket_opts
+    ):
+        selected_bucket = current_bucket
+    elif any(
         opt["value"] == DEFAULT_BUCKET and not opt.get("disabled", False) for opt in bucket_opts
     ):
         selected_bucket = DEFAULT_BUCKET
@@ -210,12 +230,6 @@ def sync_dropdowns(
         selected_bucket = str(enabled_buckets[0]["value"])
     else:
         selected_bucket = None
-    # Try to keep the current bucket if still valid and enabled
-    current_bucket = ctx.states.get("bucket.value") if hasattr(ctx, "states") else None
-    if current_bucket is not None and any(
-        opt["value"] == current_bucket and not opt.get("disabled", False) for opt in bucket_opts
-    ):
-        selected_bucket = current_bucket
 
     return ind_opts, ind_val, yr_opts, yr_val, bucket_opts, selected_bucket
 
@@ -231,42 +245,57 @@ def sync_dropdowns(
 def build_map(
     indic: str | None, yr: int | None, level: str | None, bucket: str | None
 ) -> tuple[go.Figure, Component | None]:
+    """Build the map visualization."""
     if indic is None or yr is None or bucket is None or level is None:
         return make_blank_map(), None
 
-    tbl: str = ORG_TABLE[level] if level in ORG_TABLE else "fct__practice_achievement"
-    q: str = (
-        f"SELECT organisation_name, organisation_code, "
-        f"percentage_patients_achieved AS pct, "
-        f"output_description AS descr, lat, lng "
-        f"FROM {tbl} "
-        f"WHERE indicator_code = '{indic}' "
-        f"AND reporting_year = {yr} "
-        f"AND percentage_patients_achieved {BUCKET_SQL[bucket]}"
-    )
-    df: pd.DataFrame = query(q)
-    if df.empty:
+    # Get data from the correct organization level
+    table_name = ORG_TABLE.get(level, "qof_vis.fct__practice_achievement")
+    q = f"""
+        SELECT 
+            organisation_name,
+            organisation_code,
+            percentage_patients_achieved AS pct,
+            output_description AS descr,
+            lat,
+            lng
+        FROM {table_name}
+        WHERE indicator_code = '{indic}'
+        AND reporting_year = {yr}
+        AND percentage_patients_achieved {BUCKET_SQL[bucket]}
+    """
+    df = query(q)
+    if df.is_empty():
         return make_blank_map(), None
 
-    fig = px.scatter_map(
-        df,
+    # Create the map using scatter_mapbox with updated config
+    fig = px.scatter_mapbox(
+        df.to_pandas(),
         lat="lat",
         lon="lng",
         hover_name="organisation_name",
         custom_data=["pct", "organisation_name"],
-        map_style="carto-positron",
-        center={"lat": 53, "lon": -1.5},
+        color_discrete_sequence=["#1f77b4"],
         zoom=6,
         height=700,
     )
+
+    # Configure mapbox separately
+    fig.update_layout(
+        mapbox=dict(style="carto-positron", center=dict(lat=53, lon=-1.5)),
+        margin=dict(t=0, r=0, l=0, b=0),
+    )
+
+    # Update marker and hover properties
     fig.update_traces(
-        marker={"size": 7, "color": "blue"},
-        hovertemplate="<b>%{customdata[1]}</b><br>%{customdata[0]}%<extra></extra>",
+        marker=dict(size=7),
+        hovertemplate="<b>%{customdata[1]}</b><br>%{customdata[0]:.1f}%<extra></extra>",
         hoverlabel=dict(bgcolor="white"),
     )
-    fig.update_layout(margin=dict(t=0, r=0, l=0, b=0))
 
-    return fig, dcc.Markdown(md_wrap(str(df.descr.iat[0])))
+    # Add description
+    descr_val = df["descr"][0] if df.height > 0 else ""
+    return fig, dcc.Markdown(md_wrap(str(descr_val)))
 
 
 @app.callback(
@@ -277,73 +306,169 @@ def build_map(
     State("level", "value"),
 )
 def build_bars(
-    click: dict[str, object] | None, indic: str | None, yr: int | None, level: str | None
+    click: dict[str, list[dict[str, list[str | float]]]] | None,
+    indic: str | None,
+    yr: int | None,
+    level: str | None,
 ) -> go.Figure:
+    """Build the bar chart comparison visualization."""
     if not click or indic is None or yr is None or level is None:
         return make_blank_bar()
 
-    org_name: str = str(click["points"][0]["customdata"][1])
+    # Get organization name from click data
+    clicked_point = click["points"][0]
+    if not clicked_point.get("customdata") or len(clicked_point["customdata"]) < 2:
+        return make_blank_bar("Invalid click data")
+
+    org_name = str(clicked_point["customdata"][1])
     org_name_sql = org_name.replace("'", "''")
 
-    org: pd.DataFrame = query(
-        f"""
-        SELECT group_description AS g,
-               ANY_VALUE(percentage_patients_achieved) AS org
-        FROM {ORG_TABLE[level] if level in ORG_TABLE else "fct__practice_achievement"}
-        WHERE organisation_name = '{org_name_sql}'
-          AND reporting_year = {yr}
-        GROUP BY g
-        """
-    )
-    # Use cached national averages
-    nat: pd.DataFrame = NAT_AVG_BY_YEAR.get(yr, pd.DataFrame())
-    if not nat.empty:
-        nat = nat.rename(columns={"group_description": "g", "percentage_patients_achieved": "nat"})
-        nat = nat.loc[:, ["g", "nat"]]
+    # Get organization-level achievement data
+    table_name = ORG_TABLE.get(level or "Practice", "qof_vis.fct__practice_achievement")
+    org_df = query(f"""
+        WITH group_avgs AS (
+            SELECT
+                a.group_code,
+                a.group_description,
+                COUNT(DISTINCT a.indicator_code) as indicators,
+                AVG(a.percentage_patients_achieved) as org_achievement
+            FROM {table_name} a
+            WHERE a.organisation_name = '{org_name_sql}'
+            AND a.reporting_year = {yr}
+            AND a.percentage_patients_achieved IS NOT NULL
+            GROUP BY a.group_code, a.group_description
+        )
+        SELECT 
+            group_description,
+            org_achievement
+        FROM group_avgs
+        WHERE indicators > 0
+        ORDER BY group_description
+    """)
+
+    # Get national averages for comparison
+    nat_sql = f"""
+        WITH nat_avgs AS (
+            SELECT
+                n.group_code,
+                n.group_description,
+                COUNT(DISTINCT n.indicator_code) as indicators,
+                AVG(n.percentage_patients_achieved) as nat_achievement
+            FROM qof_vis.fct__national_achievement n
+            WHERE n.reporting_year = {yr}
+            AND n.percentage_patients_achieved IS NOT NULL
+            GROUP BY n.group_code, n.group_description
+        )
+        SELECT 
+            group_code,
+            group_description,
+            nat_achievement
+        FROM nat_avgs
+        WHERE indicators > 0
+        ORDER BY group_description
+    """
+    nat_df = query(nat_sql)
+
+    if org_df.is_empty() and nat_df.is_empty():
+        return make_blank_bar(f"No data for {org_name} or National Average in {yr}")
+
+    # Combine data using full join and handle missing values
+    if not org_df.is_empty() and not nat_df.is_empty():
+        combined_df = org_df.join(nat_df, on="group_description", how="full")
+    elif not org_df.is_empty():
+        combined_df = org_df.with_columns(pl.lit(None).cast(pl.Float64).alias("nat_achievement"))
     else:
-        nat = pd.DataFrame({"g": pd.Series(dtype=str), "nat": pd.Series(dtype=float)})
-    if "g" not in org.columns or "g" not in nat.columns:
-        return make_blank_bar("No data for this organisation")
-    df: pd.DataFrame = org.merge(nat, on="g", how="left")
-    if df.empty:
-        return make_blank_bar("No data for this organisation")
-    # Average org and nat for each group
-    df = df.groupby("g", as_index=False).agg({"org": "mean", "nat": "mean"})
+        combined_df = nat_df.with_columns(pl.lit(None).cast(pl.Float64).alias("org_achievement"))
 
-    grp_row: pd.DataFrame = query(
-        f"""
-        SELECT DISTINCT group_description
-        FROM fct__practice_achievement
-        WHERE indicator_code = '{indic}'
-        """
+    # Fill null values and prepare for plotting
+    combined_df = combined_df.with_columns(
+        [pl.col("org_achievement").fill_null(0.0), pl.col("nat_achievement").fill_null(0.0)]
     )
-    highlight: str | None = str(grp_row.group_description.iat[0]) if not grp_row.empty else None
 
-    long_df: pd.DataFrame = df.melt("g", value_name="pct", var_name="series")
+    # Transform to long format
+    plot_data = {
+        "Group": combined_df["group_description"].to_list() * 2,
+        "Achievement": combined_df["org_achievement"].to_list()
+        + combined_df["nat_achievement"].to_list(),
+        "Source": [org_name] * combined_df.height + ["National Average"] * combined_df.height,
+    }
+    plot_df = pl.DataFrame(plot_data)
 
+    # Create bar chart with fixed height title area
     fig = px.bar(
-        long_df,
-        x="pct",
-        y="g",
-        color="series",
+        plot_df.to_pandas(),
+        x="Achievement",
+        y="Group",
+        color="Source",
         barmode="group",
         orientation="h",
-        labels={"pct": "% achieved", "g": "Indicator group", "series": ""},
-        color_discrete_map={"org": "#1f77b4", "nat": "#ff7f0e"},
-        height=750,
-        title=f"{org_name} vs National — {yr}",
+        height=max(400, len(combined_df["group_description"].unique()) * 40 + 150),
+        labels={"Achievement": "% Achieved", "Group": "Indicator Group", "Source": "Comparison"},
+        color_discrete_map={org_name: "#1f77b4", "National Average": "#ff7f0e"},
     )
-    if highlight and highlight in df.g.values:
-        fig.add_hrect(
-            y0=highlight, y1=highlight, line_width=0, fillcolor="rgba(0,0,0,0.05)", layer="below"
-        )
 
-    fig.update_layout(
-        hoverlabel=dict(bgcolor="white"),
-        yaxis=dict(categoryorder="category ascending", autorange="reversed"),
-        xaxis=dict(range=[0, 110]),  # Always show 0-100% with a little headroom
-        margin=dict(t=40, r=10, l=10, b=10),
+    # Add title as annotation for stable positioning
+    fig.add_annotation(
+        text=f"{org_name} vs National Average — {yr}",
+        xref="paper",
+        yref="paper",
+        x=0.5,
+        y=1.1,
+        showarrow=False,
+        font=dict(size=16),
+        xanchor="center",
     )
+
+    # Highlight current indicator group if applicable
+    if indic:
+        group_df = query(f"""
+            SELECT DISTINCT group_description
+            FROM {table_name}
+            WHERE indicator_code = '{indic}'
+            AND reporting_year = {yr}
+            LIMIT 1
+        """)
+        if not group_df.is_empty():
+            current_group = group_df["group_description"][0]
+            if current_group in plot_df["Group"].unique():
+                fig.add_hrect(
+                    y0=current_group,
+                    y1=current_group,
+                    fillcolor="rgba(0,0,0,0.05)",
+                    line_width=0,
+                    layer="below",
+                )
+
+    # Update layout with improved scaling and formatting
+    fig.update_layout(
+        xaxis=dict(
+            title="% Achieved",
+            range=[0, 110],
+            tickmode="linear",
+            dtick=20,
+            showgrid=True,
+            gridcolor="rgba(0,0,0,0.1)",
+            zeroline=True,
+            zerolinecolor="black",
+            zerolinewidth=1,
+        ),
+        yaxis=dict(title="", categoryorder="total ascending", showgrid=False),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        margin=dict(t=50, r=20, l=20, b=40),
+        hoverlabel=dict(bgcolor="white"),
+        bargap=0.2,
+        bargroupgap=0.1,
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+    )
+
+    # Add reference lines
+    for x in range(20, 101, 20):
+        fig.add_vline(x=x, line_dash="dot", line_color="rgba(0,0,0,0.2)")
+
+    # Update hover template to show exact values
+    fig.update_traces(hovertemplate="<b>%{y}</b><br>%{x:.1f}%<extra>%{fullData.name}</extra>")
+
     return fig
 
 
