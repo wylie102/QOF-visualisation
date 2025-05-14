@@ -1,5 +1,5 @@
 models:
-  - name: stg_ind__achievement_2019_2020
+  - name: stg_ind__indicators_2019_2020
     description: indicator mapping for business year 2019-2020
     columns:
       - name: indicator_code
@@ -16,8 +16,10 @@ models:
         data_type: varchar
       - name: patient_list_type
         data_type: varchar
+      - name: reporting_year
+        data_type: varchar
 
-  - name: stg_ind__achievement_2020_2021
+  - name: stg_ind__indicators_2020_2021
     description: indicator mapping for business year 2020-2021
     columns:
       - name: indicator_code
@@ -34,8 +36,10 @@ models:
         data_type: varchar
       - name: patient_list_type
         data_type: varchar
+      - name: reporting_year
+        data_type: varchar
 
-  - name: stg_ind__achievement_2021_2022
+  - name: stg_ind__indicators_2021_2022
     description: indicator mapping for business year 2021-2022
     columns:
       - name: indicator_code
@@ -52,8 +56,10 @@ models:
         data_type: varchar
       - name: patient_list_type
         data_type: varchar
+      - name: reporting_year
+        data_type: varchar
 
-  - name: stg_ind__achievement_2022_2023
+  - name: stg_ind__indicators_2022_2023
     description: indicator mapping for business year 2022-2023
     columns:
       - name: indicator_code
@@ -70,8 +76,10 @@ models:
         data_type: varchar
       - name: patient_list_type
         data_type: varchar
+      - name: reporting_year
+        data_type: varchar
 
-  - name: stg_ind__achievement_2023_2024
+  - name: stg_ind__indicators_2023_2024
     description: indicator mapping for business year 2020-2021
     columns:
       - name: indicator_code
@@ -87,4 +95,6 @@ models:
       - name: domain_description
         data_type: varchar
       - name: patient_list_type
+        data_type: varchar
+      - name: reporting_year
         data_type: varchar

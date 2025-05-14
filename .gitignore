@@ -190,3 +190,5 @@ src/QOF_visualisation/sources/epraccur
 target/
 dbt_packages/
 logs/
+qof_vis.db
+.vscode

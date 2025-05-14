@@ -10,6 +10,8 @@ models:
         data_type: varchar
       - name: value
         data_type: double
+      - name: reporting_year
+        data_type: varchar
 
   - name: stg_qof__achievement_2020_2021
     description: QOF achievements for business year 2020-2021
@@ -22,6 +24,8 @@ models:
         data_type: varchar
       - name: value
         data_type: double
+      - name: reporting_year
+        data_type: varchar
 
   - name: stg_qof__achievement_2021_2022
     description: QOF achievements for business year 2021-2022
@@ -34,6 +38,8 @@ models:
         data_type: varchar
       - name: value
         data_type: double
+      - name: reporting_year
+        data_type: varchar
 
   - name: stg_qof__achievement_2022_2023
     description: QOF achievements for business year 2022-2023
@@ -46,6 +52,8 @@ models:
         data_type: varchar
       - name: value
         data_type: double
+      - name: reporting_year
+        data_type: varchar
 
   - name: stg_qof__achievement_2023_2024
     description: QOF achievements for business year 2020-2021
@@ -58,3 +66,5 @@ models:
         data_type: varchar
       - name: value
         data_type: double
+      - name: reporting_year
+        data_type: varchar

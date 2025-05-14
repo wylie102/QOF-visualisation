@@ -5,6 +5,7 @@ select
     GROUP_DESCRIPTION as "group_description",
     DOMAIN_CODE as "domain_code",
     DOMAIN_DESCRIPTION as "domain_description",
-    PATIENT_LIST_TYPE as "patient_list_type"
+    PATIENT_LIST_TYPE as "patient_list_type",
+    2022 as reporting_year
 from
     {{ source('ind', 'qof_indicators_2021_2022') }}
